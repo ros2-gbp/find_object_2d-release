@@ -268,7 +268,7 @@ tracks:
     last_version: 0.7.0
     name: find_object_2d
     patches: null
-    release_inc: '4'
+    release_inc: '5'
     release_repo_url: null
     release_tag: :{version}-rolling
     ros_distro: rolling
