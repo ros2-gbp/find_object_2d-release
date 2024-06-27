@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>find_object_2d</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>The find_object_2d package</description>
   <maintainer email="matlabbe@gmail.com">Mathieu Labbe</maintainer>
   <author>Mathieu Labbe</author>
@@ -35,6 +35,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>message_filters</build_depend>
+  <build_depend>zlib</build_depend>
   
   <exec_depend condition="$ROS_VERSION == 1">message_runtime</exec_depend>
   <exec_depend>qtbase5-dev</exec_depend>
@@ -45,6 +46,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>message_filters</exec_depend>
+  <exec_depend>zlib</exec_depend>
   
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
