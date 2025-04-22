@@ -1,0 +1,12 @@
+Source: ros-kilted-find-object-2d
+Section: misc
+Priority: optional
+Maintainer: Mathieu Labbe <matlabbe@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), qtbase5-dev, ros-kilted-ament-cmake, ros-kilted-builtin-interfaces, ros-kilted-cv-bridge, ros-kilted-geometry-msgs, ros-kilted-image-transport, ros-kilted-message-filters, ros-kilted-rclcpp, ros-kilted-ros-environment, ros-kilted-rosidl-default-generators, ros-kilted-sensor-msgs, ros-kilted-std-msgs, ros-kilted-std-srvs, ros-kilted-tf2, ros-kilted-tf2-geometry-msgs, ros-kilted-tf2-ros, zlib1g-dev, ros-kilted-ros-workspace, ros-kilted-rosidl-typesupport-fastrtps-c, ros-kilted-rosidl-typesupport-fastrtps-cpp
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-kilted-find-object-2d
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, qtbase5-dev, ros-kilted-builtin-interfaces, ros-kilted-cv-bridge, ros-kilted-geometry-msgs, ros-kilted-image-transport, ros-kilted-message-filters, ros-kilted-rclcpp, ros-kilted-rosidl-default-runtime, ros-kilted-sensor-msgs, ros-kilted-std-msgs, ros-kilted-std-srvs, ros-kilted-tf2, ros-kilted-tf2-geometry-msgs, ros-kilted-tf2-ros, zlib1g-dev, ros-kilted-ros-workspace
+Description: The find_object_2d package
