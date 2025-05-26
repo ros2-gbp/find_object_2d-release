@@ -59,7 +59,7 @@ endif (POLICY CMP0042)
 #######################
 # VERSION
 #######################
-SET(PROJECT_VERSION "0.7.1")
+SET(PROJECT_VERSION "0.7.2")
 SET(PROJECT_PREFIX find_object)
 
 STRING(REGEX MATCHALL "[0-9]" PROJECT_VERSION_PARTS "${PROJECT_VERSION}")
@@ -93,16 +93,15 @@ IF(TORCH_FOUND)
 ENDIF(TORCH_FOUND)
 
 IF(NOT MSVC)
-    IF(TORCH_FOUND)
-     include(CheckCXXCompilerFlag)
-      CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
-      IF(COMPILER_SUPPORTS_CXX14)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-        set(CMAKE_CXX_STANDARD 14)
-      ELSE()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler if you want to use Torch.")
-      ENDIF()
-    ENDIF(TORCH_FOUND)
+    # Latest ROS rolling requires c++17
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+    IF(COMPILER_SUPPORTS_CXX17)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+      set(CMAKE_CXX_STANDARD 17)
+    ELSE()
+      message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support.")
+    ENDIF()
 
     IF( NOT CMAKE_CXX_STANDARD AND OpenCV_VERSION_MAJOR EQUAL 4)
      #Newest versions require std11
