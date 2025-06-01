@@ -48,7 +48,7 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 #######################
 # VERSION
 #######################
-SET(PROJECT_VERSION "0.7.3")
+SET(PROJECT_VERSION "0.7.4")
 SET(PROJECT_PREFIX find_object)
 
 STRING(REGEX MATCHALL "[0-9]" PROJECT_VERSION_PARTS "${PROJECT_VERSION}")
@@ -444,6 +444,9 @@ ELSE() # COLCON_BUILD
    
    IF("$ENV{ROS_DISTRO}" STRLESS "iron")
       add_definitions(-DPRE_ROS_IRON)
+   ENDIF()
+   IF("$ENV{ROS_DISTRO}" STRLESS "kilted")
+      add_definitions(-DPRE_ROS_KILTED)
    ENDIF()
 
    ###########
