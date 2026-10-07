@@ -27,14 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rclcpp/rclcpp.hpp>
 #include <find_object_2d/msg/objects_stamped.hpp>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
 #include <image_transport/image_transport.hpp>
 #include <image_transport/subscriber_filter.hpp>
 #ifdef PRE_ROS_IRON
 #include <cv_bridge/cv_bridge.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #else
 #include <cv_bridge/cv_bridge.hpp>
+#include <message_filters/subscriber.hpp>
+#include <message_filters/time_synchronizer.hpp>
 #endif
 #include <opencv2/opencv.hpp>
 #include <QTransform>
@@ -46,16 +48,36 @@ public:
 	PrintObjects() :
 		Node("objects_detected")
 	{
+#ifdef PRE_ROS_LYRICAL
 		image_transport::TransportHints hints(this);
+#else
+		image_transport::TransportHints hints(*this);
+#endif
 
-		imagePub_ = image_transport::create_publisher(this, "image_with_objects", rclcpp::QoS(1).reliability((rmw_qos_reliability_policy_t)1).get_rmw_qos_profile());
+#ifdef PRE_ROS_LYRICAL
+		imagePub_ = image_transport::create_publisher(this, "image_with_objects", rclcpp::QoS(1).reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE).get_rmw_qos_profile());
+#else
+		imagePub_ = image_transport::create_publisher(*this, "image_with_objects", rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::Reliable));
+#endif
 
 		// Simple subscriber
+#ifdef PRE_ROS_KILTED
 		sub_ = create_subscription<std_msgs::msg::Float32MultiArray>("objects", rclcpp::QoS(1).reliability((rmw_qos_reliability_policy_t)1), std::bind(&PrintObjects::objectsDetectedCallback, this, std::placeholders::_1));
+#else
+		sub_ = create_subscription<std_msgs::msg::Float32MultiArray>("objects", rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::Reliable), std::bind(&PrintObjects::objectsDetectedCallback, this, std::placeholders::_1));
+#endif
 
 		// Synchronized image + objects example
-		imageSub_.subscribe(this, "image", hints.getTransport(), rclcpp::QoS(1).reliability((rmw_qos_reliability_policy_t)1).get_rmw_qos_profile());
+#ifdef PRE_ROS_LYRICAL
+		imageSub_.subscribe(this, "image", hints.getTransport(), rclcpp::QoS(1).reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE).get_rmw_qos_profile());
+#else
+		imageSub_.subscribe(*this, "image", hints.getTransport(), rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::Reliable));
+#endif
+#ifdef PRE_ROS_KILTED
 		objectsSub_.subscribe(this, "objectsStamped", rclcpp::QoS(1).reliability((rmw_qos_reliability_policy_t)1).get_rmw_qos_profile());
+#else
+		objectsSub_.subscribe(this, "objectsStamped", rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::Reliable));
+#endif
 
 		exactSync_ = new message_filters::Synchronizer<MyExactSyncPolicy>(MyExactSyncPolicy(10), imageSub_, objectsSub_);
 		exactSync_->registerCallback(std::bind(&PrintObjects::imageObjectsDetectedCallback, this, std::placeholders::_1, std::placeholders::_2));
