@@ -1,3 +1,26 @@
+## find_object_2d (jazzy) - 0.7.5-1
+
+The packages in the `find_object_2d` repository were released into the `jazzy` distro by running `/usr/bin/bloom-release --ros-distro jazzy find_object_2d` on `Wed, 07 Oct 2026 04:42:30 -0000`
+
+The `find_object_2d` package was released.
+
+Version of package(s) in repository `find_object_2d`:
+
+- upstream repository: https://github.com/introlab/find-object.git
+- release repository: https://github.com/ros2-gbp/find_object_2d-release.git
+- rosdistro version: `0.7.1-2`
+- old version: `0.7.1-2`
+- new version: `0.7.5-1`
+
+Versions of tools used:
+
+- bloom version: `0.14.4`
+- catkin_pkg version: `1.1.0`
+- rosdep version: `0.26.0`
+- rosdistro version: `1.0.1`
+- vcstools version: `0.1.42`
+
+
 ## find_object_2d (humble) - 0.7.5-1
 
 The packages in the `find_object_2d` repository were released into the `humble` distro by running `/usr/bin/bloom-release --ros-distro humble find_object_2d` on `Wed, 07 Oct 2026 04:41:14 -0000`
