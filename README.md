@@ -1,3 +1,26 @@
+## find_object_2d (lyrical) - 0.7.5-1
+
+The packages in the `find_object_2d` repository were released into the `lyrical` distro by running `/usr/bin/bloom-release --ros-distro lyrical find_object_2d` on `Wed, 07 Oct 2026 04:45:26 -0000`
+
+The `find_object_2d` package was released.
+
+Version of package(s) in repository `find_object_2d`:
+
+- upstream repository: https://github.com/introlab/find-object.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `0.7.5-1`
+
+Versions of tools used:
+
+- bloom version: `0.14.4`
+- catkin_pkg version: `1.1.0`
+- rosdep version: `0.26.0`
+- rosdistro version: `1.0.1`
+- vcstools version: `0.1.42`
+
+
 ## find_object_2d (kilted) - 0.7.5-1
 
 The packages in the `find_object_2d` repository were released into the `kilted` distro by running `/usr/bin/bloom-release --ros-distro kilted find_object_2d` on `Wed, 07 Oct 2026 04:43:42 -0000`
