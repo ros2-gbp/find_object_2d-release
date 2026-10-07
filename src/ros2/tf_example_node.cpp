@@ -26,8 +26,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <rclcpp/rclcpp.hpp>
+#if __has_include(<tf2_ros/transform_listener.hpp>)
+#include <tf2_ros/transform_listener.hpp>
+#else
 #include <tf2_ros/transform_listener.h>
+#endif
+#if __has_include(<tf2_ros/buffer.hpp>)
+#include <tf2_ros/buffer.hpp>
+#else
 #include <tf2_ros/buffer.h>
+#endif
 #include <find_object_2d/msg/objects_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <QtCore/QString>
@@ -49,7 +57,11 @@ public:
 		targetFrameId_ = this->declare_parameter("target_frame_id", targetFrameId_);
 		objFramePrefix_ = this->declare_parameter("object_prefix", objFramePrefix_);
 
+#ifdef PRE_ROS_KILTED
 		subs_ = create_subscription<find_object_2d::msg::ObjectsStamped>("objectsStamped", rclcpp::QoS(5).reliability((rmw_qos_reliability_policy_t)1), std::bind(&TfExample::objectsDetectedCallback, this, std::placeholders::_1));
+#else
+		subs_ = create_subscription<find_object_2d::msg::ObjectsStamped>("objectsStamped", rclcpp::QoS(5).reliability(rclcpp::ReliabilityPolicy::Reliable), std::bind(&TfExample::objectsDetectedCallback, this, std::placeholders::_1));
+#endif
 	}
 
 	// Here I synchronize with the ObjectsStamped topic to
