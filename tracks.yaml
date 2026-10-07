@@ -355,8 +355,8 @@ tracks:
     - git-bloom-generate -y rosdynrpm --prefix release/:{ros_distro} :{ros_distro}
       -i :{release_inc} --require-os fedora rhel
     devel_branch: rolling-devel
-    last_release: 0.7.4-rolling
-    last_version: 0.7.4
+    last_release: 0.7.5-rolling
+    last_version: 0.7.5
     name: find_object_2d
     patches: null
     release_inc: '1'
