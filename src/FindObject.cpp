@@ -38,12 +38,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtCore/QFileInfo>
 #include <QtCore/QStringList>
 #include <QtCore/QTime>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QDir>
 #include <QGraphicsRectItem>
 #include <stdio.h>
 
-#if CV_MAJOR_VERSION > 3
-#include <opencv2/core/types_c.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/version.hpp>
+#if CV_MAJOR_VERSION < 5
+#include <opencv2/calib3d/calib3d.hpp> // for homography
+#else
+#include <opencv2/geometry.hpp> // for homography
 #endif
 
 namespace find_object {
@@ -84,7 +89,11 @@ bool FindObject::loadSession(const QString & path, const ParametersMap & customP
 	if(QFile::exists(path) && !path.isEmpty() && QFileInfo(path).suffix().compare("bin") == 0)
 	{
 		QFile file(path);
-		file.open(QIODevice::ReadOnly);
+		if(!file.open(QIODevice::ReadOnly))
+		{
+			UERROR("Failed to open file \"%s\"", path.toStdString().c_str());
+			return false;
+		}
 		QDataStream in(&file);
 
 		ParametersMap parameters;
@@ -146,7 +155,11 @@ bool FindObject::saveSession(const QString & path)
 	if(!path.isEmpty() && QFileInfo(path).suffix().compare("bin") == 0)
 	{
 		QFile file(path);
-		file.open(QIODevice::WriteOnly);
+		if(!file.open(QIODevice::WriteOnly))
+		{
+			UERROR("Failed to open file \"%s\"", path.toStdString().c_str());
+			return false;
+		}
 		QDataStream out(&file);
 
 		// save parameters
@@ -156,7 +169,7 @@ bool FindObject::saveSession(const QString & path)
 		vocabulary_->save(out);
 
 		// save objects
-		for(QMultiMap<int, ObjSignature*>::const_iterator iter=objects_.constBegin(); iter!=objects_.constEnd(); ++iter)
+		for(QMap<int, ObjSignature*>::const_iterator iter=objects_.constBegin(); iter!=objects_.constEnd(); ++iter)
 		{
 			iter.value()->save(out);
 		}
@@ -174,7 +187,11 @@ bool FindObject::saveVocabulary(const QString & filePath) const
 	if(!filePath.isEmpty() && QFileInfo(filePath).suffix().compare("bin") == 0)
 	{
 		QFile file(filePath);
-		file.open(QIODevice::WriteOnly);
+		if(!file.open(QIODevice::WriteOnly))
+		{
+			UERROR("Failed to open file \"%s\"", filePath.toStdString().c_str());
+			return false;
+		}
 		QDataStream out(&file);
 
 		// ignore parameters
@@ -205,7 +222,11 @@ bool FindObject::loadVocabulary(const QString & filePath)
 	{
 		//binary format (from session format)
 		QFile file(filePath);
-		file.open(QIODevice::ReadOnly);
+		if(!file.open(QIODevice::ReadOnly))
+		{
+			UERROR("Failed to open file \"%s\"", filePath.toStdString().c_str());
+			return false;
+		}
 		QDataStream in(&file);
 
 		ParametersMap parameters;
@@ -481,7 +502,7 @@ void computeFeatures(
 		int & timeDetection,
 		int & timeExtraction)
 {
-	QTime timeStep;
+	QElapsedTimer timeStep;
 	timeStep.start();
 	keypoints.clear();
 	descriptors = cv::Mat();
@@ -573,19 +594,22 @@ void FindObject::affineSkew(
         phi = phi*CV_PI/180.0f; // deg2rad
         float s = std::sin(phi);
         float c = std::cos(phi);
-        cv::Mat A22 = (cv::Mat_<float>(2, 2) <<
+        float a22[] = {
         		c, -s,
-        		s, c);
-        cv::Mat cornersIn = (cv::Mat_<float>(4, 2) <<
+        		s, c};
+        cv::Mat A22 = cv::Mat(2, 2, CV_32F, a22).clone();
+        float corners[] = {
         		0,0,
-        		w,0,
-        		w,h,
-        		0,h);
+        		float(w),0,
+        		float(w),float(h),
+        		0,float(h)};
+        cv::Mat cornersIn = cv::Mat(4, 2, CV_32F, corners).clone();
         cv::Mat cornersOut = cornersIn * A22.t();
         cv::Rect rect = cv::boundingRect(cornersOut.reshape(2,4));
-        A = (cv::Mat_<float>(2, 3) <<
-				c, -s, -rect.x,
-				s, c, -rect.y);
+        float a[] = {
+				c, -s, -float(rect.x),
+				s, c, -float(rect.y)};
+        A = cv::Mat(2, 3, CV_32F, a).clone();
         cv::warpAffine(image, skewImage, A, cv::Size(rect.width, rect.height), cv::INTER_LINEAR, cv::BORDER_REPLICATE);
     }
     else
@@ -642,7 +666,7 @@ public:
 protected:
 	virtual void run()
 	{
-		QTime timeStep;
+		QElapsedTimer timeStep;
 		timeStep.start();
 		cv::Mat skewImage, skewMask, Ai;
 		FindObject::affineSkew(tilt_, phi_, image_, skewImage, skewMask, Ai);
@@ -663,7 +687,8 @@ protected:
 		// Transform points to original image coordinates
 		for(unsigned int i=0; i<keypoints_.size(); ++i)
 		{
-			cv::Mat p = (cv::Mat_<float>(3, 1) << keypoints_[i].pt.x, keypoints_[i].pt.y, 1);
+			float pt[] = {keypoints_[i].pt.x, keypoints_[i].pt.y, 1.0f};
+			cv::Mat p(3, 1, CV_32F, pt);
 			cv::Mat pa = Ai * p;
 			keypoints_[i].pt.x = pa.at<float>(0,0);
 			keypoints_[i].pt.y = pa.at<float>(1,0);
@@ -678,7 +703,7 @@ protected:
 					corners,
 					cv::Size(Settings::getFeature2D_7SubPixWinSize(), Settings::getFeature2D_7SubPixWinSize()),
 					cv::Size(-1,-1),
-					cv::TermCriteria( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, Settings::getFeature2D_8SubPixIterations(), Settings::getFeature2D_9SubPixEps() ));
+					cv::TermCriteria( cv::TermCriteria::EPS + cv::TermCriteria::COUNT, Settings::getFeature2D_8SubPixIterations(), Settings::getFeature2D_9SubPixEps() ));
 			UASSERT(corners.size() == keypoints_.size());
 			for(unsigned int i=0; i<corners.size(); ++i)
 			{
@@ -738,11 +763,11 @@ public:
 protected:
 	virtual void run()
 	{
-		QTime time;
+		QElapsedTimer time;
 		time.start();
 		UDEBUG("Extracting descriptors from object %d...", objectId_);
 
-		QTime timeStep;
+		QElapsedTimer timeStep;
 		timeStep.start();
 
 		if(!Settings::getFeature2D_4Affine())
@@ -770,7 +795,7 @@ protected:
 							corners,
 							cv::Size(Settings::getFeature2D_7SubPixWinSize(), Settings::getFeature2D_7SubPixWinSize()),
 							cv::Size(-1,-1),
-							cv::TermCriteria( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, Settings::getFeature2D_8SubPixIterations(), Settings::getFeature2D_9SubPixEps() ));
+							cv::TermCriteria( cv::TermCriteria::EPS + cv::TermCriteria::COUNT, Settings::getFeature2D_8SubPixIterations(), Settings::getFeature2D_9SubPixEps() ));
 					UASSERT(corners.size() == keypoints_.size());
 					for(unsigned int i=0; i<corners.size(); ++i)
 					{
@@ -885,7 +910,7 @@ void FindObject::updateObjects(const QList<int> & ids)
 			threadCounts = objectsList.size();
 		}
 
-		QTime time;
+		QElapsedTimer time;
 		time.start();
 
 		if(objectsList.size())
@@ -952,6 +977,8 @@ void FindObject::updateVocabulary(const QList<int> & ids)
 	int count = 0;
 	int dim = -1;
 	int type = -1;
+	int vocabularyDim = -1;
+	int vocabularyType = -1;
 	QList<ObjSignature*> objectsList;
 	if(ids.size())
 	{
@@ -968,8 +995,8 @@ void FindObject::updateVocabulary(const QList<int> & ids)
 		}
 		if(vocabulary_->size())
 		{
-			dim = vocabulary_->dim();
-			type = vocabulary_->type();
+			vocabularyDim = vocabulary_->dim();
+			vocabularyType = vocabulary_->type();
 		}
 	}
 	else
@@ -983,6 +1010,23 @@ void FindObject::updateVocabulary(const QList<int> & ids)
 	{
 		if(!objectsList.at(i)->descriptors().empty())
 		{
+			if(vocabularyDim >= 0)
+			{
+				// compare as stored in the vocabulary (binary descriptors may be converted to float)
+				int objDim = objectsList.at(i)->descriptors().cols;
+				int objType = objectsList.at(i)->descriptors().type();
+				if(Vocabulary::isBinToFloatConverted(objType))
+				{
+					objDim *= 8;
+					objType = CV_32FC1;
+				}
+				if(objDim != vocabularyDim || objType != vocabularyType)
+				{
+					UERROR("Descriptors of the objects are not the same size/type than the vocabulary! Objects "
+							"opened must have been processed by the same descriptor extractor.");
+					return;
+				}
+			}
 			if(dim >= 0 && objectsList.at(i)->descriptors().cols != dim)
 			{
 				UERROR("Descriptors of the objects are not all the same size! Objects "
@@ -1066,7 +1110,7 @@ void FindObject::updateVocabulary(const QList<int> & ids)
 		{
 			// Inverted index on (vocabulary)
 			sessionModified_ = true;
-			QTime time;
+			QElapsedTimer time;
 			time.start();
 			bool incremental = Settings::getGeneral_vocabularyIncremental() && !Settings::getGeneral_vocabularyFixed();
 			if(incremental)
@@ -1081,7 +1125,7 @@ void FindObject::updateVocabulary(const QList<int> & ids)
 			{
 				UINFO("Creating vocabulary...");
 			}
-			QTime localTime;
+			QElapsedTimer localTime;
 			localTime.start();
 			int updateVocabularyMinWords = Settings::getGeneral_vocabularyUpdateMinWords();
 			int addedWords = 0;
@@ -1389,7 +1433,7 @@ void FindObject::detect(const cv::Mat & image)
 
 void FindObject::detect(const cv::Mat & image, const Header & header, const cv::Mat & depth, float depthConstant)
 {
-	QTime time;
+	QElapsedTimer time;
 	time.start();
 	DetectionInfo info;
 	this->detect(image, info);
@@ -1423,7 +1467,7 @@ void FindObject::detect(const cv::Mat & image, const Header & header, const cv::
 
 bool FindObject::detect(const cv::Mat & image, find_object::DetectionInfo & info) const
 {
-	QTime totalTime;
+	QElapsedTimer totalTime;
 	totalTime.start();
 
 	// reset statistics
@@ -1467,9 +1511,11 @@ bool FindObject::detect(const cv::Mat & image, find_object::DetectionInfo & info
 		bool vocabularyValid = Settings::getGeneral_invertedSearch() &&
 								vocabulary_->size() &&
 								!vocabulary_->indexedDescriptors().empty() &&
-								vocabulary_->indexedDescriptors().cols == info.sceneDescriptors_.cols &&
-								(vocabulary_->indexedDescriptors().type() == info.sceneDescriptors_.type() ||
-										(Settings::getNearestNeighbor_7ConvertBinToFloat() && vocabulary_->indexedDescriptors().type() == CV_32FC1));
+								((vocabulary_->indexedDescriptors().cols == info.sceneDescriptors_.cols &&
+								  vocabulary_->indexedDescriptors().type() == info.sceneDescriptors_.type()) ||
+								 (Vocabulary::isBinToFloatConverted(info.sceneDescriptors_.type()) &&
+								  vocabulary_->indexedDescriptors().cols == info.sceneDescriptors_.cols*8 &&
+								  vocabulary_->indexedDescriptors().type() == CV_32FC1));
 
 		// COMPARE
 		UDEBUG("COMPARE");
@@ -1478,7 +1524,7 @@ bool FindObject::detect(const cv::Mat & image, find_object::DetectionInfo & info
 		    consistentNNData)
 		{
 			success = true;
-			QTime time;
+			QElapsedTimer time;
 			time.start();
 
 			QMultiMap<int, int> words;
@@ -1567,7 +1613,7 @@ bool FindObject::detect(const cv::Mat & image, find_object::DetectionInfo & info
 						int wordId = results.at<int>(i,0);
 						if(Settings::getGeneral_invertedSearch())
 						{
-							info.sceneWords_.insertMulti(wordId, i);
+							info.sceneWords_.insert(wordId, i);
 							QList<int> objIds = vocabulary_->wordToObjects().values(wordId);
 							for(int j=0; j<objIds.size(); ++j)
 							{
@@ -1728,7 +1774,7 @@ bool FindObject::detect(const cv::Mat & image, find_object::DetectionInfo & info
 									//  Find the smaller angle
 									QLineF ab(rectH.at(a).x(), rectH.at(a).y(), rectH.at((a+1)%4).x(), rectH.at((a+1)%4).y());
 									QLineF cb(rectH.at((a+1)%4).x(), rectH.at((a+1)%4).y(), rectH.at((a+2)%4).x(), rectH.at((a+2)%4).y());
-									float angle =  ab.angle(cb);
+									float angle =  qMin(ab.angleTo(cb), cb.angleTo(ab));
 									float minAngle = (float)Settings::getHomography_minAngle();
 									if(angle < minAngle ||
 									   angle > 180.0-minAngle)
