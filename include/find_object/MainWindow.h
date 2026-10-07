@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtCore/QTime>
 #include <QtCore/QMap>
 #include <QtCore/QByteArray>
-#include <QElapsedTimer>
+#include <QtCore/QElapsedTimer>
 
 #include <opencv2/opencv.hpp>
 
@@ -125,6 +125,7 @@ private:
 	int saveObjects(const QString & dirPath);
 	void setupTCPServer();
 	int addObjectFromFile(const QString & filePath);
+	QString imagesDirectory() const;
 	void showObject(find_object::ObjWidget * obj);
 	void updateObjectSize(find_object::ObjWidget * obj);
 	void updateVocabulary(const QList<int> & ids = QList<int>());
@@ -146,6 +147,7 @@ private:
 	QMap<QString, QVariant> lastObjectsUpdateParameters_; // ParametersMap
 	TcpServer * tcpServer_;
 	cv::Mat sceneImage_;
+	QString lastImagesDirectory_; // directory of the last images loaded during this session
 };
 
 } // namespace find_object
