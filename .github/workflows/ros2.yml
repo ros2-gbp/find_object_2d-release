@@ -3,9 +3,9 @@ name: ros2
 
 on:
   push:
-    branches: [ humble-devel ]
+    branches: [ jazzy-devel ]
   pull_request:
-    branches: [ humble-devel ]
+    branches: [ jazzy-devel ]
   workflow_dispatch:
 
 env:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ros_distro: [humble]
+        ros_distro: [jazzy]
         # ros2: released packages, ros2-testing: packages built since the last sync
         ros_repo: [ros2, ros2-testing]
       fail-fast: false
