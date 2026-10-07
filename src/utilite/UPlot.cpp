@@ -35,6 +35,7 @@
 #include <QToolButton>
 #include <QLabel>
 #include <QMenu>
+#include <QActionGroup>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -893,7 +894,7 @@ void UPlotCurve::setData(const std::vector<float> & x, const std::vector<float> 
 
 void UPlotCurve::setData(const QVector<float> & y)
 {
-	this->setData(y.toStdVector());
+	this->setData(std::vector<float>(y.begin(), y.end()));
 }
 
 void UPlotCurve::setData(const std::vector<float> & y)
@@ -1103,8 +1104,8 @@ void UPlotAxis::setAxis(float & min, float & max)
 	}
 	else
 	{
-		borderMin = this->fontMetrics().width(QString::number(_min,'g',_gradMaxDigits))/2;
-		borderMax = this->fontMetrics().width(QString::number(_max,'g',_gradMaxDigits))/2;
+		borderMin = this->fontMetrics().horizontalAdvance(QString::number(_min,'g',_gradMaxDigits))/2;
+		borderMax = this->fontMetrics().horizontalAdvance(QString::number(_max,'g',_gradMaxDigits))/2;
 	}
 	int border = borderMin>borderMax?borderMin:borderMax;
 	int borderDelta;
@@ -1212,9 +1213,9 @@ void UPlotAxis::setAxis(float & min, float & max)
 		for (int i = 0; i <= _count; i+=5)
 		{
 			QString n(QString::number(_min + (i/5)*((_max-_min)/(_count/5)),'g',_gradMaxDigits));
-			if(this->fontMetrics().width(n) > minWidth)
+			if(this->fontMetrics().horizontalAdvance(n) > minWidth)
 			{
-				minWidth = this->fontMetrics().width(n);
+				minWidth = this->fontMetrics().horizontalAdvance(n);
 			}
 		}
 		this->setMinimumWidth(15+minWidth);
@@ -1399,7 +1400,7 @@ void UPlotLegend::addItem(const UPlotCurve * curve)
 		QHBoxLayout * hLayout = new QHBoxLayout();
 		hLayout->addWidget(legendItem);
 		hLayout->addStretch(0);
-		hLayout->setMargin(0);
+		hLayout->setContentsMargins(0, 0, 0, 0);
 
 		// add to the legend
 		((QVBoxLayout*)this->layout())->insertLayout(this->layout()->count()-1, hLayout);
@@ -2239,8 +2240,8 @@ void UPlot::contextMenuEvent(QContextMenuEvent * event)
 
 			QPalette p(palette());
 			// Set background color to white
-			QColor c = p.color(QPalette::Background);
-			p.setColor(QPalette::Background, Qt::white);
+			QColor c = p.color(QPalette::Window);
+			p.setColor(QPalette::Window, Qt::white);
 			setPalette(p);
 
 #ifdef QT_SVG_LIB
@@ -2266,14 +2267,14 @@ void UPlot::contextMenuEvent(QContextMenuEvent * event)
 				}
 				else
 				{
-					QPixmap figure = QPixmap::grabWidget(this);
+					QPixmap figure = this->grab();
 					figure.save(text);
 				}
 #ifdef QT_SVG_LIB
 			}
 #endif
 			// revert background color
-			p.setColor(QPalette::Background, c);
+			p.setColor(QPalette::Window, c);
 			setPalette(p);
 
 			if(flatModified)
@@ -2331,7 +2332,7 @@ void UPlot::captureScreen()
 	}
 	targetDir += "/";
 	QString name = (QDateTime::currentDateTime().toString("yyMMddhhmmsszzz") + ".") + _autoScreenCaptureFormat;
-	QPixmap figure = QPixmap::grabWidget(this);
+	QPixmap figure = this->grab();
 	figure.save(targetDir + name);
 }
 
@@ -2515,7 +2516,7 @@ void UPlot::removeCurves()
 
 void UPlot::removeCurve(const UPlotCurve * curve)
 {
-	QList<UPlotCurve *>::iterator iter = qFind(_curves.begin(), _curves.end(), curve);
+	QList<UPlotCurve *>::iterator iter = std::find(_curves.begin(), _curves.end(), curve);
 #if PRINT_DEBUG
 	ULOGGER_DEBUG("Plot=\"%s\" removing curve=\"%s\"", this->objectName().toStdString().c_str(), curve?curve->name().toStdString().c_str():"");
 #endif
@@ -2549,7 +2550,7 @@ void UPlot::removeCurve(const UPlotCurve * curve)
 
 void UPlot::showCurve(const UPlotCurve * curve, bool shown)
 {
-	QList<UPlotCurve *>::iterator iter = qFind(_curves.begin(), _curves.end(), curve);
+	QList<UPlotCurve *>::iterator iter = std::find(_curves.begin(), _curves.end(), curve);
 	if(iter!=_curves.end())
 	{
 		UPlotCurve * value = *iter;
