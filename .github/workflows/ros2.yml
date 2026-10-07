@@ -3,9 +3,9 @@ name: ros2
 
 on:
   push:
-    branches: [ kilted-devel ]
+    branches: [ lyrical-devel ]
   pull_request:
-    branches: [ kilted-devel ]
+    branches: [ lyrical-devel ]
   workflow_dispatch:
 
 env:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ros_distro: [kilted]
+        ros_distro: [lyrical]
         # ros2: released packages, ros2-testing: packages built since the last sync
         ros_repo: [ros2, ros2-testing]
       fail-fast: false
