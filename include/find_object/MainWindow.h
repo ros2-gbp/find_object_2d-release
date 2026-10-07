@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtCore/QTime>
 #include <QtCore/QMap>
 #include <QtCore/QByteArray>
+#include <QtCore/QElapsedTimer>
 
 #include <opencv2/opencv.hpp>
 
@@ -124,6 +125,7 @@ private:
 	int saveObjects(const QString & dirPath);
 	void setupTCPServer();
 	int addObjectFromFile(const QString & filePath);
+	QString imagesDirectory() const;
 	void showObject(find_object::ObjWidget * obj);
 	void updateObjectSize(find_object::ObjWidget * obj);
 	void updateVocabulary(const QList<int> & ids = QList<int>());
@@ -137,14 +139,15 @@ private:
 	rtabmap::PdfPlotCurve * inliersCurve_;
 	AboutDialog * aboutDialog_;
 	QMap<int, find_object::ObjWidget*> objWidgets_;
-	QTime updateRate_;
-	QTime refreshStartTime_;
+	QElapsedTimer updateRate_;
+	QElapsedTimer refreshStartTime_;
 	int lowestRefreshRate_;
 	bool objectsModified_;
 	QMap<int, QByteArray> imagesMap_;
 	QMap<QString, QVariant> lastObjectsUpdateParameters_; // ParametersMap
 	TcpServer * tcpServer_;
 	cv::Mat sceneImage_;
+	QString lastImagesDirectory_; // directory of the last images loaded during this session
 };
 
 } // namespace find_object
